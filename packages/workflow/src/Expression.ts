@@ -112,6 +112,11 @@ export class Expression {
 			versions: process.versions,
 		};
 
+		// @ts-ignore
+		data.document = {};
+		// @ts-ignore
+		data.constructor = {};
+
 		// Execute the expression
 		try {
 			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call

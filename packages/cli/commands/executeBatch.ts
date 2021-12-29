@@ -28,6 +28,7 @@ import {
 	CredentialTypes,
 	Db,
 	ExternalHooks,
+	GenericHelpers,
 	InternalHooksManager,
 	IWorkflowDb,
 	IWorkflowExecutionDataProcess,
@@ -305,7 +306,8 @@ export class ExecuteBatch extends Command {
 		await externalHooks.init();
 
 		const instanceId = await UserSettings.getInstanceId();
-		InternalHooksManager.init(instanceId);
+		const { cli } = await GenericHelpers.getVersions();
+		InternalHooksManager.init(instanceId, cli);
 
 		// Add the found types to an instance other parts of the application can use
 		const nodeTypes = NodeTypes();
@@ -817,10 +819,22 @@ export class ExecuteBatch extends Command {
 								const changes = diff(JSON.parse(contents), data, { keysOnly: true });
 
 								if (changes !== undefined) {
-									// we have structural changes. Report them.
-									executionResult.error = `Workflow may contain breaking changes`;
-									executionResult.changes = changes;
-									executionResult.executionStatus = 'error';
+									// If we had only additions with no removals
+									// Then we treat as a warning and not an error.
+									// To find this, we convert the object to JSON
+									// and search for the `__deleted` string
+									const changesJson = JSON.stringify(changes);
+									if (changesJson.includes('__deleted')) {
+										// we have structural changes. Report them.
+										executionResult.error = 'Workflow may contain breaking changes';
+										executionResult.changes = changes;
+										executionResult.executionStatus = 'error';
+									} else {
+										executionResult.error =
+											'Workflow contains new data that previously did not exist.';
+										executionResult.changes = changes;
+										executionResult.executionStatus = 'warning';
+									}
 								} else {
 									executionResult.executionStatus = 'success';
 								}
@@ -842,7 +856,8 @@ export class ExecuteBatch extends Command {
 					}
 				}
 			} catch (e) {
-				executionResult.error = 'Workflow failed to execute.';
+				// eslint-disable-next-line @typescript-eslint/restrict-template-expressions, @typescript-eslint/no-unsafe-member-access
+				executionResult.error = `Workflow failed to execute: ${e.message}`;
 				executionResult.executionStatus = 'error';
 			}
 			clearTimeout(timeoutTimer);

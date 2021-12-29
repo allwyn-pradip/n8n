@@ -30,7 +30,6 @@ export class Dropbox implements INodeType {
 		description: 'Access data on Dropbox',
 		defaults: {
 			name: 'Dropbox',
-			color: '#007ee5',
 		},
 		inputs: ['main'],
 		outputs: ['main'],
@@ -621,7 +620,7 @@ export class Dropbox implements INodeType {
 						name: 'file_extensions',
 						type: 'string',
 						default: '',
-						description: 'Multiple can be set separated by comma. Example: jpg,pdf',
+						description: 'Multiple file extensions can be set separated by comma. Example: jpg,pdf',
 					},
 					{
 						displayName: 'Folder',
